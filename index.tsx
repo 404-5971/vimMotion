@@ -39,10 +39,10 @@ function handleKeyDown(key_event: KeyboardEvent): void
   switch (key_event.key)
   {
     case "j":
-      scroller?.scrollBy({ top: -50, behavior: "instant" });
+      scroller?.scrollBy({ top: 50, behavior: "instant" });
       break;
     case "k":
-      scroller?.scrollBy({ top: 50, behavior: "instant" });
+      scroller?.scrollBy({ top: -50, behavior: "instant" });
       break;
     case "i":
       mode = Mode.INSERT;
