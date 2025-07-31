@@ -137,12 +137,29 @@ function handleKeyDown(key_event: KeyboardEvent): void {
         }, 500);
     }
     const scroller = getScroller();
+    const editor = getEditor();
+    const hasText = !!editor?.textContent?.trim();
+    const selection = window.getSelection();
     switch (key_event.key) {
+        case "h":
+            selection?.modify("move", "backward", "character");
+            break;
+        case "l":
+            selection?.modify("move", "forward", "character");
+            break;
         case "j":
-            scroller?.scrollBy({ top: 50, behavior: "instant" });
+            if (!hasText) {
+                scroller?.scrollBy({ top: 50, behavior: "instant" });
+            } else {
+                selection?.modify("move", "forward", "line");
+            }
             break;
         case "k":
-            scroller?.scrollBy({ top: -50, behavior: "instant" });
+            if (!hasText) {
+                scroller?.scrollBy({ top: -50, behavior: "instant" });
+            } else {
+                selection?.modify("move", "backward", "line");
+            }
             break;
         case "i":
             enterInsertMode();
