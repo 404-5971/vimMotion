@@ -16,6 +16,8 @@ let cursorElement: HTMLDivElement | null = null;
 let idleTimer: NodeJS.Timeout | null = null;
 let styleElement: HTMLStyleElement | null = null;
 const inputListener: () => void = updateCursor;
+let entryLength: number = 0;
+let entryKey: string = "";
 
 function getScroller(): HTMLElement | null {
     const wrapper = document.querySelector('[class*="messagesWrapper_"]');
@@ -86,6 +88,42 @@ function updateCursor() {
     cursorElement.style.height = `${height}px`;
 }
 
+function getCaretPositionType(): "before" | "after" | "empty" | "unknown" {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return "unknown";
+    const range = selection.getRangeAt(0);
+    if (!range.collapsed) return "unknown";
+    const hasNext = range.endContainer.nodeType === Node.TEXT_NODE && range.endOffset < (range.endContainer.textContent?.length ?? 0);
+    const hasPrevious = range.startOffset > 0 && range.startContainer.nodeType === Node.TEXT_NODE;
+    if (hasNext) return "before";
+    if (hasPrevious) return "after";
+    return "empty";
+}
+
+function moveLeft() {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed && range.startContainer.nodeType === Node.TEXT_NODE && range.startOffset > 0) {
+        range.setStart(range.startContainer, range.startOffset - 1);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+
+function moveRight() {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (range.collapsed && range.startContainer.nodeType === Node.TEXT_NODE && range.startOffset < (range.startContainer.textContent?.length ?? 0)) {
+        range.setStart(range.startContainer, range.startOffset + 1);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+
 function enterNormalMode() {
     mode = Mode.NORMAL;
     const editor = getEditor();
@@ -93,6 +131,13 @@ function enterNormalMode() {
     editor.focus();
     editor.style.caretColor = "transparent";
     editor.addEventListener("input", inputListener);
+    const currentLength = editor.textContent?.length ?? 0;
+    const noInsert = currentLength === entryLength;
+    if (entryKey === "a" && noInsert) {
+        moveLeft();
+    }
+    entryKey = "";
+    entryLength = 0;
     cursorElement = document.createElement("div");
     cursorElement.className = "vimmotion-cursor";
     document.body.appendChild(cursorElement);
@@ -162,8 +207,29 @@ function handleKeyDown(key_event: KeyboardEvent): void {
             }
             break;
         case "i":
+            const typeI = getCaretPositionType();
+            if (typeI === "after") {
+                moveLeft();
+            }
+            entryKey = "i";
+            entryLength = editor?.textContent?.length ?? 0;
             enterInsertMode();
             break;
+        case "a":
+            const typeA = getCaretPositionType();
+            if (typeA === "before") {
+                moveRight();
+            }
+            entryKey = "a";
+            entryLength = editor?.textContent?.length ?? 0;
+            enterInsertMode();
+            break;
+    }
+    if (["h", "j", "k", "l"].includes(key_event.key)) {
+        const type = getCaretPositionType();
+        if (type === "after") {
+            moveLeft();
+        }
     }
     updateCursor();
 }
