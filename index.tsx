@@ -248,6 +248,12 @@ function handleKeyDown(key_event: KeyboardEvent): void {
             entryLength = editor?.textContent?.length ?? 0;
             enterInsertMode();
             break;
+        case "w":
+            selection?.modify("move", "forward", "word");
+            break;
+        case "b":
+            selection?.modify("move", "backward", "word");
+            break;
         case "i":
             const typeI = getCaretPositionType();
             if (typeI === "after") {
@@ -267,7 +273,7 @@ function handleKeyDown(key_event: KeyboardEvent): void {
             enterInsertMode();
             break;
     }
-    if (["h", "j", "k", "l"].includes(key_event.key)) {
+    if (["h", "j", "k", "l", "w", "b"].includes(key_event.key)) {
         const type = getCaretPositionType();
         if (type === "after") {
             moveLeft();
