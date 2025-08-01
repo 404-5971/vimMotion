@@ -124,6 +124,31 @@ function moveRight() {
     }
 }
 
+function moveToLineStart() {
+    const selection = window.getSelection();
+    selection?.modify("move", "backward", "lineboundary");
+}
+
+function moveToLineEnd() {
+    const selection = window.getSelection();
+    selection?.modify("move", "forward", "lineboundary");
+}
+
+function moveToFirstNonBlank() {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return;
+    let range = selection.getRangeAt(0);
+    while (true) {
+        const charRange = range.cloneRange();
+        charRange.setEnd(charRange.endContainer, charRange.endOffset + 1);
+        const text = charRange.toString();
+        if (!text || /\S/.test(text)) break;
+        range = charRange;
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+
 function enterNormalMode() {
     mode = Mode.NORMAL;
     const editor = getEditor();
@@ -205,6 +230,23 @@ function handleKeyDown(key_event: KeyboardEvent): void {
             } else {
                 selection?.modify("move", "backward", "line");
             }
+            break;
+        case "I":
+            moveToLineStart();
+            moveToFirstNonBlank();
+            const typeBigI = getCaretPositionType();
+            if (typeBigI === "after") {
+                moveLeft();
+            }
+            entryKey = "i";
+            entryLength = editor?.textContent?.length ?? 0;
+            enterInsertMode();
+            break;
+        case "A":
+            moveToLineEnd();
+            entryKey = "a";
+            entryLength = editor?.textContent?.length ?? 0;
+            enterInsertMode();
             break;
         case "i":
             const typeI = getCaretPositionType();
